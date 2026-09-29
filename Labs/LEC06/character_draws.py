@@ -9,7 +9,7 @@ open_canvas(800, 600)
 character = load_image('character.png')
 
 
-def move_circle():
+def draw_circle():
     print("circle")
     for deg in range(0, 360, 5):
         rad=math.radians(deg)
@@ -21,7 +21,7 @@ def move_circle():
         delay(0.01)
     pass
 
-def move_triangle():
+def draw_triangle():
     print("triangle")
     pass
 
@@ -42,7 +42,7 @@ def draw_left():
     print("left")
     pass
 
-def move_rectangle():
+def draw_rectangle():
     print("rectangle")
     draw_top()
     draw_right()
@@ -51,9 +51,10 @@ def move_rectangle():
     pass
 
 while True:
-    move_circle()
-    move_triangle()
-    move_rectangle()
+    #draw_circle()
+    draw_rectangle()
+    draw_triangle()
+    break
     pass
 
 close_canvas()
