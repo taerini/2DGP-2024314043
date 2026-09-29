@@ -92,6 +92,10 @@ def draw_rectangle():
     draw_left()
     pass
 
+def exit():
+    print("exit")
+    pass
+
 while True:
     draw_circle()
     draw_rectangle()
