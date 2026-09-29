@@ -11,10 +11,13 @@ character = load_image('character.png')
 
 def draw_circle():
     print("circle")
-    for deg in range(0, 360, 5):
-        rad=math.radians(deg)
-        x=400+200*math.cos(rad)
-        y=300+200*math.sin(rad)
+    radius = 200
+    circumference = 2 * math.pi * radius
+    step_count = int(circumference / 5)
+    for i in range(step_count):
+        rad = i * (5 / radius)
+        x=400+radius*math.cos(rad)
+        y=300+radius*math.sin(rad)
         draw_character(x, y)
     pass
 
