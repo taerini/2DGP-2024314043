@@ -28,6 +28,7 @@ def draw_line(x1, y1, x2, y2):
         x = x1 + d * math.cos(angle)
         y = y1 + d * math.sin(angle)
         draw_character(x, y)
+    draw_character(x2, y2)
 
 
 def draw_first_line():
