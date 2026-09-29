@@ -40,7 +40,7 @@ def draw_second_line():
 
 def draw_third_line():
     print("third line")
-    draw_line(111, 50, 689, 50)
+    draw_line(689, 50, 111, 50)
     pass
 
 
