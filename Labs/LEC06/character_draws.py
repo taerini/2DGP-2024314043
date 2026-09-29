@@ -20,12 +20,15 @@ def draw_circle():
 
 
 def draw_first_line():
+    print("first line")
     pass
 
 def draw_second_line():
+    print("second line")
     pass
 
 def draw_third_line():
+    print("third line")
     pass
 
 
