@@ -27,7 +27,6 @@ def draw_circle():
         y=CENTER_Y+CIRCLE_RADIUS*math.sin(rad)
         draw_character(x, y)
     draw_character(CENTER_X + CIRCLE_RADIUS, CENTER_Y)
-    pass
 
 def draw_line(x1, y1, x2, y2):
     distance = math.hypot(x2 - x1, y2 - y1)
@@ -42,18 +41,15 @@ def draw_line(x1, y1, x2, y2):
 def draw_first_line():
     print("first line")
     draw_line(TRI_LEFT, BOTTOM, TRI_APEX_X, TRI_APEX_Y)
-    pass
 
 
 def draw_second_line():
     print("second line")
     draw_line(TRI_APEX_X, TRI_APEX_Y, TRI_RIGHT, BOTTOM)
-    pass
 
 def draw_third_line():
     print("third line")
     draw_line(TRI_RIGHT, BOTTOM, TRI_LEFT, BOTTOM)
-    pass
 
 
 def draw_triangle():
@@ -61,14 +57,12 @@ def draw_triangle():
     draw_first_line()
     draw_second_line()
     draw_third_line()
-    pass
 
 
 def draw_top():
     print("top")
     for x in range(LEFT, RIGHT + 1, STEP):
         draw_character(x, TOP)
-    pass
 
 
 
@@ -85,19 +79,16 @@ def draw_right():
     print("right")
     for y in range(TOP, BOTTOM - 1, -STEP):
         draw_character(RIGHT, y)
-    pass
 
 def draw_bottom():
     print("bottom")
     for x in range(RIGHT, LEFT - 1, -STEP):
         draw_character(x, BOTTOM)
-    pass
 
 def draw_left():
     print("left")
     for y in range(BOTTOM, TOP + 1, STEP):
         draw_character(LEFT, y)
-    pass
 
 def draw_rectangle():
     print("rectangle")
@@ -105,7 +96,6 @@ def draw_rectangle():
     draw_right()
     draw_bottom()
     draw_left()
-    pass
 
 def gameExit():
     events=get_events()
@@ -119,6 +109,5 @@ while gameExit():
     draw_circle()
     draw_rectangle()
     draw_triangle()
-    pass
 
 close_canvas()
