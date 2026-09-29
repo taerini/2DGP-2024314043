@@ -35,10 +35,12 @@ def draw_first_line():
 
 def draw_second_line():
     print("second line")
+    draw_line(400, 550, 689, 50)
     pass
 
 def draw_third_line():
     print("third line")
+    draw_line(111, 50, 689, 50)
     pass
 
 
