@@ -92,11 +92,16 @@ def draw_rectangle():
     draw_left()
     pass
 
-def exit():
-    print("exit")
-    pass
+def gameExit():
+    print("gameExit")
+    events=get_events()
+    for event in events:
+        if event.type==SDL_KEYDOWN and event.key==SDLK_q:
+            return False
+    return True
 
-while True:
+
+while gameExit():
     draw_circle()
     draw_rectangle()
     draw_triangle()
