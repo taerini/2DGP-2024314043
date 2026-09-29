@@ -108,7 +108,6 @@ def draw_rectangle():
     pass
 
 def gameExit():
-    print("gameExit")
     events=get_events()
     for event in events:
         if event.type==SDL_KEYDOWN and event.key in (SDLK_q, SDLK_ESCAPE):
