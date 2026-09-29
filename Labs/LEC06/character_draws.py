@@ -19,6 +19,7 @@ def draw_circle():
         x=400+radius*math.cos(rad)
         y=300+radius*math.sin(rad)
         draw_character(x, y)
+    draw_character(400 + radius, 300)
     pass
 
 def draw_line(x1, y1, x2, y2):
