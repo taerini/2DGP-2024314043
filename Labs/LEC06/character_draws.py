@@ -18,8 +18,22 @@ def draw_circle():
         draw_character(x, y)
     pass
 
+
+def draw_first_line():
+    pass
+
+def draw_second_line():
+    pass
+
+def draw_third_line():
+    pass
+
+
 def draw_triangle():
     print("triangle")
+    draw_first_line()
+    draw_second_line()
+    draw_third_line()
     pass
 
 
