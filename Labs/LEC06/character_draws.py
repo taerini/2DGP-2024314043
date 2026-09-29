@@ -18,17 +18,18 @@ def draw_circle():
         draw_character(x, y)
     pass
 
-
-def draw_first_line():
-    print("first line")
-    x1, y1 = 50, 50
-    x2, y2 = 400, 550
+def draw_line(x1, y1, x2, y2):
     distance = math.hypot(x2 - x1, y2 - y1)
     angle = math.atan2(y2 - y1, x2 - x1)
     for d in range(0, int(distance), 5):
         x = x1 + d * math.cos(angle)
         y = y1 + d * math.sin(angle)
         draw_character(x, y)
+
+
+def draw_first_line():
+    print("first line")
+    draw_line(111, 50, 400, 550)
     pass
 
 
@@ -54,6 +55,8 @@ def draw_top():
     for x in range(50, 750, 5):
         draw_character(x, 550)
     pass
+
+
 
 def draw_character(x, y):
     clear_canvas()
