@@ -68,6 +68,9 @@ def draw_character(x, y):
     character.draw(x, y)
     update_canvas()
     delay(0.01)
+    if not gameExit():
+        close_canvas()
+        exit()
 
 def draw_right():
     print("right")
