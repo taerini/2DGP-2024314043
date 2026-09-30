@@ -25,6 +25,18 @@ def draw_frame(frame):
                                left, bottom, frame['w'] * SCALE, frame['h'] * SCALE)
 
 
+def play_animation(name):
+    # name 애니메이션을 REPEAT 회 반복 재생한 뒤 PAUSE_TIME 동안 정지
+    # 프레임 목록을 그대로 돌기 때문에 애니메이션마다 프레임 수가 달라도 동작
+    for _ in range(REPEAT):
+        for frame in frames[name]:
+            clear_canvas()
+            draw_frame(frame)
+            update_canvas()
+            delay(FRAME_TIME)
+    delay(PAUSE_TIME)
+
+
 def draw_idle():
     for _ in range(REPEAT):
         for frame in frames['idle']:
