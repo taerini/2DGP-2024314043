@@ -12,6 +12,11 @@ with open('sprite_sheet.json') as f:
     frames = json.load(f)['animations']   # 애니메이션 이름 -> 프레임(x, y, w, h, ax, ay) 목록
 
 
+def draw_frame(frame):
+    # 시트에서 frame 영역만 잘라서 화면에 그림
+    sprite.clip_draw(frame['x'], frame['y'], frame['w'], frame['h'], CENTER_X, GROUND_Y)
+
+
 def draw_idle():
     pass
 
