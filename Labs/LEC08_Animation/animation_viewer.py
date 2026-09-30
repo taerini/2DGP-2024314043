@@ -47,7 +47,7 @@ def draw_run():
     play_animation('run')
 
 def draw_jump():
-    pass
+    play_animation('jump')
 
 def draw_attack():
     pass
