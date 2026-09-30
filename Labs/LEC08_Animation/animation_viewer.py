@@ -15,8 +15,11 @@ with open('sprite_sheet.json') as f:
 
 def draw_frame(frame):
     # 시트에서 frame 영역만 잘라서 SCALE 배로 확대해 화면에 그림
-    sprite.clip_draw(frame['x'], frame['y'], frame['w'], frame['h'],
-                     CENTER_X, GROUND_Y, frame['w'] * SCALE, frame['h'] * SCALE)
+    # 프레임마다 크기가 달라도 발 기준점(ax, ay)이 항상 (CENTER_X, GROUND_Y)에 오도록 왼쪽 아래 위치를 계산
+    left = CENTER_X - frame['ax'] * SCALE
+    bottom = GROUND_Y - frame['ay'] * SCALE
+    sprite.clip_draw_to_origin(frame['x'], frame['y'], frame['w'], frame['h'],
+                               left, bottom, frame['w'] * SCALE, frame['h'] * SCALE)
 
 
 def draw_idle():
