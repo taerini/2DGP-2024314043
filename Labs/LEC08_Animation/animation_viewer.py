@@ -38,13 +38,7 @@ def play_animation(name):
 
 
 def draw_idle():
-    for _ in range(REPEAT):
-        for frame in frames['idle']:
-            clear_canvas()
-            draw_frame(frame)
-            update_canvas()
-            delay(FRAME_TIME)
-    delay(PAUSE_TIME)
+    play_animation('idle')
 
 def draw_walk():
     pass
