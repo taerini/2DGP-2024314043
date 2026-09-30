@@ -1,7 +1,11 @@
 from pico2d import *
 import json
 
-open_canvas()
+WIDTH, HEIGHT = 800, 600
+CENTER_X = WIDTH // 2      # 캐릭터를 그릴 가로 중앙
+GROUND_Y = 120             # 캐릭터 발이 닿는 높이
+
+open_canvas(WIDTH, HEIGHT)
 
 sprite = load_image('sprite_sheet.png')
 with open('sprite_sheet.json') as f:
