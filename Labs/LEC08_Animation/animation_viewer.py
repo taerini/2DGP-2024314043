@@ -6,6 +6,7 @@ CENTER_X = WIDTH // 2      # 캐릭터를 그릴 가로 중앙
 GROUND_Y = 120             # 캐릭터 발이 닿는 높이
 SCALE = 6                  # 확대 배율 (키 55px -> 330px, 화면 높이의 절반 이상)
 FRAME_TIME = 0.1           # 프레임 하나를 보여주는 시간(초)
+REPEAT = 5                 # 애니메이션 하나를 반복하는 횟수
 
 open_canvas(WIDTH, HEIGHT)
 
@@ -24,11 +25,12 @@ def draw_frame(frame):
 
 
 def draw_idle():
-    for frame in frames['idle']:
-        clear_canvas()
-        draw_frame(frame)
-        update_canvas()
-        delay(FRAME_TIME)
+    for _ in range(REPEAT):
+        for frame in frames['idle']:
+            clear_canvas()
+            draw_frame(frame)
+            update_canvas()
+            delay(FRAME_TIME)
 
 def draw_walk():
     pass
