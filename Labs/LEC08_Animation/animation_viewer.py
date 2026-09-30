@@ -41,7 +41,7 @@ def draw_idle():
     play_animation('idle')
 
 def draw_walk():
-    pass
+    play_animation('walk')
 
 def draw_run():
     pass
