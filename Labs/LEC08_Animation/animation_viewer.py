@@ -23,9 +23,10 @@ def draw_frame(frame):
 
 
 def draw_idle():
-    clear_canvas()
-    draw_frame(frames['idle'][0])
-    update_canvas()
+    for frame in frames['idle']:
+        clear_canvas()
+        draw_frame(frame)
+        update_canvas()
 
 def draw_walk():
     pass
