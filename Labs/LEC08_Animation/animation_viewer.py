@@ -50,7 +50,7 @@ def draw_jump():
     play_animation('jump')
 
 def draw_attack():
-    pass
+    play_animation('attack')
 
 
 while True:
