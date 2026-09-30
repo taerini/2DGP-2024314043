@@ -8,4 +8,20 @@ with open('sprite_sheet.json') as f:
     frames = json.load(f)['animations']   # 애니메이션 이름 -> 프레임(x, y, w, h, ax, ay) 목록
 
 
+def draw_idle():
+    pass
+
+def draw_walk():
+    pass
+
+def draw_run():
+    pass
+
+def draw_jump():
+    pass
+
+def draw_attack():
+    pass
+
+
 close_canvas()
