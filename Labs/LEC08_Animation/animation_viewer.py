@@ -24,4 +24,12 @@ def draw_attack():
     pass
 
 
+while True:
+    draw_idle()
+    draw_walk()
+    draw_run()
+    draw_jump()
+    draw_attack()
+
+
 close_canvas()
