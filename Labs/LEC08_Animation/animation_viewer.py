@@ -15,6 +15,18 @@ sprite = load_image('sprite_sheet.png')
 with open('sprite_sheet.json') as f:
     frames = json.load(f)['animations']   # 애니메이션 이름 -> 프레임(x, y, w, h, ax, ay) 목록
 
+running = True
+
+
+def handle_events():
+    # 창의 X 버튼이나 ESC 키를 누르면 running 을 False 로 바꿔 종료
+    global running
+    for event in get_events():
+        if event.type == SDL_QUIT:
+            running = False
+        elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
+            running = False
+
 
 def draw_frame(frame, x=CENTER_X):
     # 시트에서 frame 영역만 잘라서 SCALE 배로 확대해 화면에 그림
@@ -33,6 +45,9 @@ def play_animation(name, x=CENTER_X):
             clear_canvas()
             draw_frame(frame, x)
             update_canvas()
+            handle_events()
+            if not running:
+                return
             delay(FRAME_TIME)
     delay(PAUSE_TIME)
 
@@ -53,7 +68,7 @@ def draw_attack():
     play_animation('attack')
 
 
-while True:
+while running:
     draw_idle()
     draw_walk()
     draw_run()
