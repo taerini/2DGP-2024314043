@@ -44,7 +44,7 @@ def draw_walk():
     play_animation('walk')
 
 def draw_run():
-    pass
+    play_animation('run')
 
 def draw_jump():
     pass
