@@ -83,9 +83,11 @@ def draw_frame(frame, x, y=GROUND_Y, direction=1):
 
 def start_action(index):
     # index 번 동작을 처음부터 재생하도록 상태를 초기화
-    global action_index, frame_index, repeat_count, frame_timer, pausing, pause_timer, x
+    # 이동 동작도 중앙 고정 동작(speed 0)도 화면 가운데에서 오른쪽을 보고 시작
+    global action_index, frame_index, repeat_count, frame_timer, pausing, pause_timer, x, direction
     action_index = index
     x = CENTER_X
+    direction = 1
     frame_index = 0
     repeat_count = 0
     frame_timer = 0.0
