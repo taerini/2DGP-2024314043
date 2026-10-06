@@ -5,6 +5,7 @@ CENTER_X = WIDTH // 2      # 화면 가로 중앙
 GROUND_Y = 100             # 캐릭터 발이 닿는 높이
 SCALE = 4                  # 확대 배율 (원본의 4배)
 REPEAT = 5                 # 동작 하나를 반복 재생하는 횟수
+PAUSE_TIME = 1.0           # 반복이 끝난 뒤 정지하는 시간(초)
 
 # 동작 목록: 이름, 프레임 (left, bottom, w, h) 목록, 프레임 하나를 보여주는 시간(초)
 # 프레임 좌표는 pico2d 처럼 아래쪽 기준
@@ -24,6 +25,8 @@ action_index = 0            # 지금 재생 중인 동작 번호
 frame_index = 0
 repeat_count = 0            # 지금 동작을 끝까지 재생한 횟수
 frame_timer = 0.0           # 현재 프레임을 보여준 시간
+pausing = False             # True 면 정지 구간 (마지막 프레임 유지)
+pause_timer = 0.0           # 정지한 시간
 
 
 def handle_events():
@@ -43,12 +46,27 @@ def draw_frame(frame, x, y=GROUND_Y):
     sprite.clip_draw(left, bottom, w, h, x, y + h * SCALE / 2, w * SCALE, h * SCALE)
 
 
+def start_action(index):
+    # index 번 동작을 처음부터 재생하도록 상태를 초기화
+    global action_index, frame_index, repeat_count, frame_timer, pausing, pause_timer
+    action_index = index
+    frame_index = 0
+    repeat_count = 0
+    frame_timer = 0.0
+    pausing = False
+    pause_timer = 0.0
+
+
 def update(dt):
     # 실제 경과 시간 dt 를 쌓아서 frame_time 이 지날 때마다 다음 프레임으로
-    # 마지막 프레임을 보여준 뒤에는 1회 재생 완료, REPEAT 회가 끝나면 마지막 프레임에서 멈춤
-    global frame_index, frame_timer, repeat_count
+    # 마지막 프레임을 보여준 뒤에는 1회 재생 완료, REPEAT 회가 끝나면 PAUSE_TIME 동안 정지
+    # 정지 중에도 이 함수는 매 화면 불리므로 이벤트 처리와 화면 갱신은 계속됨
+    global frame_index, frame_timer, repeat_count, pausing, pause_timer
     action = ACTIONS[action_index]
-    if repeat_count >= REPEAT:
+    if pausing:
+        pause_timer += dt
+        if pause_timer >= PAUSE_TIME:
+            start_action(action_index)   # 아직 동작이 하나뿐이라 같은 동작을 다시 재생
         return
     frame_timer += dt
     while frame_timer >= action['frame_time']:
@@ -56,6 +74,7 @@ def update(dt):
         if frame_index == len(action['frames']) - 1:
             repeat_count += 1
             if repeat_count >= REPEAT:
+                pausing = True
                 return
             frame_index = 0
         else:
