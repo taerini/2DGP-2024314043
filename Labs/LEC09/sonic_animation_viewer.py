@@ -61,6 +61,8 @@ SCENES = [
      'x': (None, 1000), 'direction': 1, 'bounces': [120, 120, 120, 120]},
     {'name': 'bounce back', 'actor': 'a', 'frames': 'ball', 'frame_time': 0.06, 'duration': 0.9,
      'x': (None, 700), 'direction': -1, 'bounces': [100, 60], 'ball_wait': True},
+    {'name': 'far enter', 'actor': 'b', 'frames': 'dash', 'frame_time': 0.05, 'duration': 2.0,
+     'x': (START_X, 550), 'y': (380, 260), 'scale': (1.5, 2.5), 'direction': 1},
 ]
 
 
@@ -152,6 +154,7 @@ def start_scene(index):
         if key in scene:
             start, end = scene[key]
             scene['from'][key] = getattr(actor, key) if start is None else start
+            setattr(actor, key, scene['from'][key])   # 시작 화면부터 시작값으로 그려지도록
 
 
 def update_scene(dt):
