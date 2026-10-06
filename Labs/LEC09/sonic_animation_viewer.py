@@ -1,4 +1,6 @@
 from pico2d import *
+import os
+import pico2d
 
 WIDTH, HEIGHT = 1200, 600
 CENTER_X = WIDTH // 2      # 화면 가로 중앙
@@ -49,6 +51,8 @@ ACTIONS = [
 open_canvas(WIDTH, HEIGHT)
 
 sprite = load_image('sonic-sprite.png')
+# 동작 이름 표시용 글꼴: pico2d 패키지에 들어 있는 글꼴 사용
+font = load_font(os.path.join(os.path.dirname(pico2d.__file__), 'data', 'ConsolaMalgun.ttf'), 24)
 
 running = True
 action_index = 0            # 지금 재생 중인 동작 번호
@@ -145,6 +149,12 @@ def jump_height():
 def draw():
     clear_canvas()
     draw_frame(ACTIONS[action_index]['frames'][frame_index], x, GROUND_Y + jump_height(), direction)
+    # 왼쪽 위에 현재 동작 이름과 몇 번째 재생인지 표시 (예: walk 3/5)
+    if pausing:
+        info = '%s %d/%d (정지)' % (ACTIONS[action_index]['name'], REPEAT, REPEAT)
+    else:
+        info = '%s %d/%d' % (ACTIONS[action_index]['name'], repeat_count + 1, REPEAT)
+    font.draw(20, HEIGHT - 30, info, (0, 0, 0))
     update_canvas()
 
 
