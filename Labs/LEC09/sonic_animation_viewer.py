@@ -4,18 +4,22 @@ WIDTH, HEIGHT = 1200, 600
 CENTER_X = WIDTH // 2      # 화면 가로 중앙
 GROUND_Y = 100             # 캐릭터 발이 닿는 높이
 SCALE = 4                  # 확대 배율 (원본의 4배)
-FRAME_TIME = 0.12          # 프레임 하나를 보여주는 시간(초)
 
-# idle 프레임 (left, bottom, w, h) - pico2d 처럼 아래쪽 기준 좌표
-IDLE_FRAMES = [(1, 447, 29, 39), (31, 447, 26, 38), (58, 447, 28, 39), (86, 447, 30, 38),
-               (118, 447, 30, 38), (150, 447, 30, 38), (182, 447, 29, 38), (211, 448, 29, 38),
-               (240, 448, 29, 38), (270, 448, 24, 32), (302, 448, 29, 26)]
+# 동작 목록: 이름, 프레임 (left, bottom, w, h) 목록, 프레임 하나를 보여주는 시간(초)
+# 프레임 좌표는 pico2d 처럼 아래쪽 기준
+ACTIONS = [
+    {'name': 'idle', 'frame_time': 0.12,
+     'frames': [(1, 447, 29, 39), (31, 447, 26, 38), (58, 447, 28, 39), (86, 447, 30, 38),
+                (118, 447, 30, 38), (150, 447, 30, 38), (182, 447, 29, 38), (211, 448, 29, 38),
+                (240, 448, 29, 38), (270, 448, 24, 32), (302, 448, 29, 26)]},
+]
 
 open_canvas(WIDTH, HEIGHT)
 
 sprite = load_image('sonic-sprite.png')
 
 running = True
+action_index = 0            # 지금 재생 중인 동작 번호
 frame_index = 0
 frame_timer = 0.0           # 현재 프레임을 보여준 시간
 
@@ -38,17 +42,18 @@ def draw_frame(frame, x, y=GROUND_Y):
 
 
 def update(dt):
-    # 실제 경과 시간 dt 를 쌓아서 FRAME_TIME 이 지날 때마다 다음 프레임으로
+    # 실제 경과 시간 dt 를 쌓아서 frame_time 이 지날 때마다 다음 프레임으로
     global frame_index, frame_timer
+    action = ACTIONS[action_index]
     frame_timer += dt
-    while frame_timer >= FRAME_TIME:
-        frame_timer -= FRAME_TIME
-        frame_index = (frame_index + 1) % len(IDLE_FRAMES)
+    while frame_timer >= action['frame_time']:
+        frame_timer -= action['frame_time']
+        frame_index = (frame_index + 1) % len(action['frames'])
 
 
 def draw():
     clear_canvas()
-    draw_frame(IDLE_FRAMES[frame_index], CENTER_X)
+    draw_frame(ACTIONS[action_index]['frames'][frame_index], CENTER_X)
     update_canvas()
 
 
