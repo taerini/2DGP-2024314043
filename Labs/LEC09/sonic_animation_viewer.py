@@ -13,6 +13,8 @@ START_X = 100              # 왼쪽 아래 시작점의 가로 위치
 SCALE = 4                  # 기본 확대 배율 (원본의 4배)
 WAIT_BOUNCE = 16           # 공이 기다리는 동안 튕기는 높이(px)
 WAIT_PERIOD = 0.36         # 기다리는 동안 한 번 튕기는 시간(초)
+KICK_VX, KICK_VY = 700, 650   # 찬 공의 처음 속도(px/s): 오른쪽, 위쪽
+GRAVITY = 900                 # 날아가는 공에 작용하는 중력 가속도(px/s^2)
 
 # 줄별 프레임 (left, bottom, w, h) 목록 - pico2d 처럼 아래쪽 기준 좌표, 위에서부터 1~10번째 줄
 FRAMES = {
@@ -102,7 +104,9 @@ actors = {'a': sonic_a, 'b': sonic_b}
 scene_index = 0             # 지금 재생 중인 장면 번호
 scene_time = 0.0            # 지금 장면이 시작된 뒤 지난 시간
 finished = False            # 마지막 장면까지 끝났으면 True (마지막 화면 유지)
-ball_state = 'scene'        # 공(소닉 A) 상태 - 'scene': 장면이 움직임, 'wait': 제자리에서 작게 튕김
+ball_state = 'scene'        # 공(소닉 A) 상태 - 'scene': 장면이 움직임, 'wait': 제자리에서 작게 튕김,
+                            #                   'fly': 차여서 날아감, 'gone': 화면 밖으로 사라짐
+ball_vy = 0.0               # 날아가는 공의 세로 속도
 ball_time = 0.0             # 공이 지금 상태가 된 뒤 지난 시간
 kicked = False              # 장면 9 에서 공을 찼으면 True
 
@@ -189,6 +193,7 @@ def update_kick(scene, actor, dt):
         kicked = True
         actor.frame_index = scene['kick_frame']
         actor.x = ball_left - frame_width(actor) / 2     # 겹치지 않고 딱 닿는 위치로
+        start_ball_fly()
 
 
 def update_scene(dt):
@@ -199,6 +204,8 @@ def update_scene(dt):
     scene_time += dt
     if scene.get('kick'):
         update_kick(scene, actor, dt)
+        if ball_state == 'gone':    # 찬 공이 화면 밖으로 사라지면 다음 장면
+            next_scene()
         return
     t = min(scene_time, scene['duration'])
     p = t / scene['duration']
@@ -221,13 +228,33 @@ def start_ball_wait():
     ball_time = 0.0
 
 
+def start_ball_fly():
+    global ball_state, ball_time, ball_vy
+    ball_state = 'fly'
+    ball_time = 0.0
+    ball_vy = KICK_VY
+    sonic_a.direction = 1       # 오른쪽으로 날아가므로 그림 방향도 오른쪽
+
+
 def update_ball(dt):
     # 장면과 따로 공의 대기 동작을 계산: 공 프레임을 계속 돌리며 WAIT_PERIOD 마다 작게 튕김
-    global ball_time
+    # 찬 공은 오른쪽 위로 날아가며 중력으로 세로 속도가 줄고, 그림 전체가 화면 밖으로 나가면 사라짐
+    global ball_time, ball_vy, ball_state
     if ball_state == 'wait':
         ball_time += dt
         sonic_a.frame_index = int(ball_time / 0.06) % len(sonic_a.frames)
         sonic_a.height = bounce_height(ball_time % WAIT_PERIOD, WAIT_PERIOD, [WAIT_BOUNCE])
+    elif ball_state == 'fly':
+        ball_time += dt
+        sonic_a.frame_index = int(ball_time / 0.06) % len(sonic_a.frames)
+        sonic_a.x += KICK_VX * dt
+        sonic_a.height += ball_vy * dt
+        ball_vy -= GRAVITY * dt
+        left = sonic_a.x - frame_width(sonic_a) / 2
+        bottom = sonic_a.y + sonic_a.height
+        if left > WIDTH or bottom > HEIGHT:
+            ball_state = 'gone'
+            sonic_a.visible = False
 
 
 def update(dt):
