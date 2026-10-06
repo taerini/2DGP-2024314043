@@ -1,3 +1,8 @@
+# 소닉 애니메이션 뷰어
+# sonic-sprite.png 의 10가지 동작을 차례로 5회씩 재생하고 1초 정지한 뒤 다음 동작으로, 끝나면 처음부터 반복
+# 이동 동작은 재생과 동시에 화면을 가로질러 움직이고, 중앙 고정 동작은 화면 가운데에서 재생
+# 종료: 창 닫기 버튼 또는 ESC
+
 from pico2d import *
 import os
 import pico2d
@@ -50,13 +55,14 @@ ACTIONS = [
 
 open_canvas(WIDTH, HEIGHT)
 
-sprite = load_image('sonic-sprite.png')
+# 어느 폴더에서 실행해도 이 파일 옆의 이미지를 읽도록 경로를 만듦
+sprite = load_image(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sonic-sprite.png'))
 # 동작 이름 표시용 글꼴: pico2d 패키지에 들어 있는 글꼴 사용
 font = load_font(os.path.join(os.path.dirname(pico2d.__file__), 'data', 'ConsolaMalgun.ttf'), 24)
 
 running = True
 action_index = 0            # 지금 재생 중인 동작 번호
-frame_index = 0
+frame_index = 0             # 지금 보여주는 프레임 번호
 repeat_count = 0            # 지금 동작을 끝까지 재생한 횟수
 frame_timer = 0.0           # 현재 프레임을 보여준 시간
 pausing = False             # True 면 정지 구간 (마지막 프레임 유지)
