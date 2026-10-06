@@ -134,8 +134,9 @@ def update(dt):
 
 def jump_height():
     # 1회 재생 안에서의 진행률 p (0~1) 로 포물선 높이 4 * H * p * (1 - p) 계산
+    # 정지 중에는 5회째 착지한 상태로 지면에 둠
     action = ACTIONS[action_index]
-    if not action.get('jump'):
+    if not action.get('jump') or pausing:
         return 0
     p = (frame_index + frame_timer / action['frame_time']) / len(action['frames'])
     return 4 * JUMP_HEIGHT * p * (1 - p)
