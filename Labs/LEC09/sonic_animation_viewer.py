@@ -22,10 +22,18 @@ def handle_events():
             running = False
 
 
+def draw_frame(frame, x, y=GROUND_Y):
+    # frame = (left, bottom, w, h) 영역을 SCALE 배로 확대해 그림
+    # 프레임마다 크기가 달라도 아래 변 중앙이 (x, y)에 오도록 중심 위치를 계산
+    left, bottom, w, h = frame
+    sprite.clip_draw(left, bottom, w, h, x, y + h * SCALE / 2, w * SCALE, h * SCALE)
+
+
 def draw():
     clear_canvas()
-    # 확인용: idle 첫 프레임 (left, bottom, w, h) = (1, 447, 29, 39) 를 4배로 중앙에
-    sprite.clip_draw(1, 447, 29, 39, CENTER_X, GROUND_Y + 39 * SCALE / 2, 29 * SCALE, 39 * SCALE)
+    # 확인용: 크기가 다른 idle 프레임 두 장의 발 높이 비교
+    draw_frame((1, 447, 29, 39), CENTER_X - 200)
+    draw_frame((302, 448, 29, 26), CENTER_X + 200)
     update_canvas()
 
 
