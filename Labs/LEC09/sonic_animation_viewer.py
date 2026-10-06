@@ -46,7 +46,7 @@ FRAMES = {
 # actor: 'a' 는 처음 소닉(나중에 공), 'b' 는 나중에 등장하는 소닉
 # frames: FRAMES 의 줄 이름, frame_time: 프레임 하나를 보여주는 시간(초), duration: 장면 시간(초)
 # x, y, scale: (시작값, 끝값) - 장면 동안 경과 시간 비율로 보간, 시작값이 None 이면 앞 장면에서 이어받음
-# direction: 1 이면 오른쪽, -1 이면 왼쪽(그림 좌우 반전)
+# direction: 1 이면 오른쪽, -1 이면 왼쪽(그림 좌우 반전), 'auto' 면 x 끝값을 향하는 쪽
 # once: True 면 프레임을 한 번만 재생 (기본은 장면이 끝날 때까지 반복)
 # bounces: 튕김마다 최고 높이(px) 목록 - 장면 시간을 똑같이 나눠 차례로 튕김
 # ball_wait: True 면 장면이 끝난 뒤 공(소닉 A)이 그 자리에서 작게 튕기며 기다림
@@ -73,6 +73,10 @@ SCENES = [
      'kick': True, 'speed': 450, 'kick_frame': 4},
     {'name': 'leap', 'actor': 'b', 'frames': 'leap', 'frame_time': 0.12, 'duration': 1.22,
      'leap': (0.72, 0.5, 200)},
+    {'name': 'skid', 'actor': 'b', 'frames': 'skid', 'frame_time': 0.08, 'duration': 0.64,
+     'x': (None, CENTER_X), 'direction': 'auto', 'once': True},
+    {'name': 'pose', 'actor': 'b', 'frames': 'pose', 'frame_time': 0.15, 'duration': 0.6,
+     'direction': 1, 'once': True},
 ]
 
 
@@ -161,6 +165,8 @@ def start_scene(index):
     actor.frame_index = 0
     actor.height = 0
     actor.direction = scene.get('direction', actor.direction)
+    if actor.direction == 'auto':
+        actor.direction = 1 if scene['x'][1] >= actor.x else -1
     # 보간할 값의 시작값이 None 이면 지금 값에서 시작
     scene['from'] = {}
     for key in ('x', 'y', 'scale'):
