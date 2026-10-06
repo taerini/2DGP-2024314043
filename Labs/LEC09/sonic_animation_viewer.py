@@ -1,6 +1,9 @@
 from pico2d import *
 
 WIDTH, HEIGHT = 1200, 600
+CENTER_X = WIDTH // 2      # 화면 가로 중앙
+GROUND_Y = 100             # 캐릭터 발이 닿는 높이
+SCALE = 4                  # 확대 배율 (원본의 4배)
 
 open_canvas(WIDTH, HEIGHT)
 
@@ -21,7 +24,8 @@ def handle_events():
 
 def draw():
     clear_canvas()
-    sprite.draw(WIDTH // 2, HEIGHT // 2)   # 확인용: 시트 전체를 가운데에
+    # 확인용: idle 첫 프레임 (left, bottom, w, h) = (1, 447, 29, 39) 를 4배로 중앙에
+    sprite.clip_draw(1, 447, 29, 39, CENTER_X, GROUND_Y + 39 * SCALE / 2, 29 * SCALE, 39 * SCALE)
     update_canvas()
 
 
