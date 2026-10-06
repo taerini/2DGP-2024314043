@@ -93,7 +93,7 @@ def update(dt):
     # 실제 경과 시간 dt 를 쌓아서 frame_time 이 지날 때마다 다음 프레임으로
     # 마지막 프레임을 보여준 뒤에는 1회 재생 완료, REPEAT 회가 끝나면 PAUSE_TIME 동안 정지
     # 정지 중에도 이 함수는 매 화면 불리므로 이벤트 처리와 화면 갱신은 계속됨
-    global frame_index, frame_timer, repeat_count, pausing, pause_timer, x
+    global frame_index, frame_timer, repeat_count, pausing, pause_timer, x, direction
     action = ACTIONS[action_index]
     if pausing:
         pause_timer += dt
@@ -110,10 +110,19 @@ def update(dt):
             repeat_count += 1
             if repeat_count >= REPEAT:
                 pausing = True
-                return
+                break
             frame_index = 0
         else:
             frame_index += 1
+    # 확대된 프레임 가장자리가 화면 끝에 닿으면 안쪽으로 되돌리고 방향을 반대로
+    # 프레임마다 폭이 다르므로 이번 화면에 그릴 프레임으로 검사
+    half = action['frames'][frame_index][2] * SCALE / 2
+    if x + half > WIDTH:
+        x = WIDTH - half
+        direction = -1
+    elif x - half < 0:
+        x = half
+        direction = 1
 
 
 def draw():
