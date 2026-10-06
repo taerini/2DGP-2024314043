@@ -17,7 +17,14 @@ def handle_events():
             running = False
 
 
+def draw():
+    clear_canvas()
+    update_canvas()
+
+
 while running:
     handle_events()
+    draw()
+    delay(0.01)
 
 close_canvas()
