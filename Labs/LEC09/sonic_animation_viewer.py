@@ -6,9 +6,10 @@ GROUND_Y = 100             # 캐릭터 발이 닿는 높이
 SCALE = 4                  # 확대 배율 (원본의 4배)
 REPEAT = 5                 # 동작 하나를 반복 재생하는 횟수
 PAUSE_TIME = 1.0           # 반복이 끝난 뒤 정지하는 시간(초)
+JUMP_HEIGHT = 160          # 점프 최고 높이(px)
 
 # 동작 목록: 이름, 프레임 하나를 보여주는 시간(초), 이동 속도(px/s, 0 이면 제자리),
-#            프레임 (left, bottom, w, h) 목록
+#            프레임 (left, bottom, w, h) 목록, jump 가 True 면 1회 재생마다 포물선 점프
 # 프레임 좌표는 pico2d 처럼 아래쪽 기준
 ACTIONS = [
     {'name': 'idle', 'frame_time': 0.12, 'speed': 0,
@@ -26,7 +27,7 @@ ACTIONS = [
      'frames': [(1, 326, 29, 30), (35, 327, 29, 31), (67, 327, 30, 29), (98, 327, 31, 29),
                 (131, 327, 29, 30), (162, 326, 29, 31), (193, 326, 30, 29), (230, 326, 31, 29),
                 (268, 325, 30, 30)]},
-    {'name': 'jump', 'frame_time': 0.06, 'speed': 300,
+    {'name': 'jump', 'frame_time': 0.06, 'speed': 300, 'jump': True,
      'frames': [(1, 292, 30, 27), (36, 292, 29, 27), (70, 292, 29, 27), (105, 292, 29, 27),
                 (139, 292, 29, 27), (174, 292, 29, 27)]},
     {'name': 'dash', 'frame_time': 0.05, 'speed': 550,
@@ -131,9 +132,18 @@ def update(dt):
         direction = 1
 
 
+def jump_height():
+    # 1회 재생 안에서의 진행률 p (0~1) 로 포물선 높이 4 * H * p * (1 - p) 계산
+    action = ACTIONS[action_index]
+    if not action.get('jump'):
+        return 0
+    p = (frame_index + frame_timer / action['frame_time']) / len(action['frames'])
+    return 4 * JUMP_HEIGHT * p * (1 - p)
+
+
 def draw():
     clear_canvas()
-    draw_frame(ACTIONS[action_index]['frames'][frame_index], x, direction=direction)
+    draw_frame(ACTIONS[action_index]['frames'][frame_index], x, GROUND_Y + jump_height(), direction)
     update_canvas()
 
 
