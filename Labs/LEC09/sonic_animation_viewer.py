@@ -14,8 +14,8 @@ SCALE = 4                  # 기본 확대 배율 (원본의 4배)
 BALL_FRAME_TIME = 0.06     # 장면 밖에서 공(기다림, 날아감) 프레임 하나를 보여주는 시간(초)
 WAIT_BOUNCE = 16           # 공이 기다리는 동안 튕기는 높이(px)
 WAIT_PERIOD = 0.36         # 기다리는 동안 한 번 튕기는 시간(초)
-KICK_VX, KICK_VY = 700, 650   # 찬 공의 처음 속도(px/s): 오른쪽, 위쪽
-GRAVITY = 900                 # 날아가는 공에 작용하는 중력 가속도(px/s^2)
+FLY_TO_CORNER = 0.5        # 찬 공이 오른쪽 위 모서리까지 날아가는 시간(초)
+FLY_TO_TOP = 0.6           # 모서리에서 튕겨 소닉 머리 위 화면 밖까지 날아가는 시간(초)
 
 # 줄별 프레임 (left, bottom, w, h) 목록 - pico2d 처럼 아래쪽 기준 좌표, 위에서부터 1~10번째 줄
 FRAMES = {
@@ -51,8 +51,12 @@ FRAMES = {
 # once: True 면 프레임을 한 번만 재생 (기본은 장면이 끝날 때까지 반복)
 # bounces: 튕김마다 최고 높이(px) 목록 - 장면 시간을 똑같이 나눠 차례로 튕김
 # ball_wait: True 면 장면이 끝난 뒤 공(소닉 A)이 그 자리에서 작게 튕기며 기다림
-# kick: True 면 정해진 시간 대신 speed(px/s) 로 달려가 공에 닿으면 kick_frame 그림으로 멈추고 공을 참
-# leap: (올라가는 시간, 떨어지는 시간, 최고 높이) - 앞 6프레임으로 뛰어오르고 뒤 2프레임으로 추락
+# frame_order: 줄의 프레임 중 쓸 번호 목록 (없으면 줄 전체를 순서대로)
+# x_path: x 가 차례로 지나갈 값 목록 - 장면 시간을 똑같이 나눠 구간마다 직선 이동 (시작은 앞 장면에서 이어받음)
+# kick: (달려가는 줄, 달리는 프레임 시간) - 정해진 시간 대신 speed(px/s) 로 달려가 공 앞에 멈춘 뒤
+#       frames 줄을 한 번 재생하며 kick_frame 번째 그림에서 공을 참, 공이 사라지면 장면 끝
+# leap: (올라가는 시간, 떨어지는 시간, 최고 높이, 떨어지며 오른쪽으로 가는 거리)
+#       앞 6프레임으로 뛰어오르고 뒤 2프레임으로 오른쪽 대각선 아래로 추락
 SCENES = [
     {'name': 'idle', 'actor': 'a', 'frames': 'idle', 'frame_time': 0.12, 'duration': 2.64,
      'x': (START_X, START_X), 'direction': 1},
@@ -70,14 +74,16 @@ SCENES = [
      'x': (START_X, 550), 'y': (380, 260), 'scale': (1.5, 2.5), 'direction': 1},
     {'name': 'come near', 'actor': 'b', 'frames': 'peel_out', 'frame_time': 0.05, 'duration': 2.0,
      'x': (None, START_X), 'y': (None, GROUND_Y), 'scale': (None, SCALE), 'direction': -1},
-    {'name': 'run kick', 'actor': 'b', 'frames': 'run', 'frame_time': 0.06, 'direction': 1,
-     'kick': True, 'speed': 450, 'kick_frame': 4},
-    {'name': 'leap', 'actor': 'b', 'frames': 'leap', 'frame_time': 0.12, 'duration': 1.22,
-     'leap': (0.72, 0.5, 200)},
-    {'name': 'skid', 'actor': 'b', 'frames': 'skid', 'frame_time': 0.08, 'duration': 0.64,
-     'x': (None, CENTER_X), 'direction': 'auto', 'once': True},
-    {'name': 'pose', 'actor': 'b', 'frames': 'pose', 'frame_time': 0.15, 'duration': 0.6,
-     'direction': 1, 'once': True},
+    {'name': 'run kick', 'actor': 'b', 'frames': 'run', 'frame_time': 0.08, 'direction': 1,
+     'kick': ('dash', 0.05), 'speed': 450, 'kick_frame': 4},
+    {'name': 'leap', 'actor': 'b', 'frames': 'leap', 'frame_time': 0.12, 'duration': 1.72,
+     'leap': (0.72, 1.0, 300, 150)},
+    {'name': 'skid', 'actor': 'b', 'frames': 'skid', 'frame_time': 0.12, 'duration': 0.96,
+     'x_path': [922, 200], 'direction': 1, 'once': True},
+    {'name': 'hop', 'actor': 'b', 'frames': 'pose', 'frame_order': [0, 1], 'frame_time': 0.15,
+     'duration': 0.3, 'direction': 1, 'once': True, 'bounces': [30]},
+    {'name': 'pose', 'actor': 'b', 'frames': 'pose', 'frame_order': [2, 3, 2, 3], 'frame_time': 0.15,
+     'duration': 0.6, 'direction': 1, 'once': True},
 ]
 
 
@@ -114,8 +120,11 @@ scene_time = 0.0            # 지금 장면이 시작된 뒤 지난 시간
 finished = False            # 마지막 장면까지 끝났으면 True (마지막 화면 유지)
 ball_state = 'scene'        # 공(소닉 A) 상태 - 'scene': 장면이 움직임, 'wait': 제자리에서 작게 튕김,
                             #                   'fly': 차여서 날아감, 'gone': 화면 밖으로 사라짐
-ball_vy = 0.0               # 날아가는 공의 세로 속도
+ball_path = []              # 날아가는 공이 지나갈 점 [(x, 높이, 방향, 걸리는 시간), ...]
+ball_from = (0, 0)          # 지금 구간을 시작한 공의 (x, 높이)
 ball_time = 0.0             # 공이 지금 상태가 된 뒤 지난 시간
+kick_stop = False           # 장면 9 에서 공 앞에 멈췄으면 True
+kick_time = 0.0             # 멈춘 뒤 지난 시간
 kicked = False              # 장면 9 에서 공을 찼으면 True
 
 
@@ -163,6 +172,9 @@ def start_scene(index):
     actor = actors[scene['actor']]
     actor.visible = True
     actor.frames = FRAMES[scene['frames']]
+    if 'frame_order' in scene:
+        actor.frames = [actor.frames[i] for i in scene['frame_order']]
+    scene['start_x'] = actor.x
     actor.frame_index = 0
     actor.height = 0
     actor.direction = scene.get('direction', actor.direction)
@@ -192,24 +204,36 @@ def frame_width(actor):
 
 
 def update_kick(scene, actor, dt):
-    # 공을 향해 달리다가 소닉 그림 오른쪽 끝이 공 그림 왼쪽 끝에 닿으면 차는 그림으로 멈춤
-    global kicked
-    if kicked:
+    # 달리는 줄 그림으로 공을 향해 달리다가, 차는 그림의 오른쪽 끝이 공 왼쪽 끝에 닿는 곳에서 멈춤
+    # 멈춘 뒤 frames 줄을 한 번 재생하고, kick_frame 번째 그림이 나올 때 공을 참
+    global kick_stop, kick_time, kicked
+    kick_frames = FRAMES[scene['frames']]
+    kick_half = kick_frames[scene['kick_frame']][2] * actor.scale / 2
+    if not kick_stop:
+        run_frames, run_time = scene['kick']
+        actor.frames = FRAMES[run_frames]
+        actor.frame_index = int(scene_time / run_time) % len(actor.frames)
+        actor.x += scene['speed'] * dt
+        ball_left = sonic_a.x - frame_width(sonic_a) / 2
+        if actor.x + kick_half >= ball_left:
+            kick_stop = True
+            kick_time = 0.0
+            actor.x = ball_left - kick_half     # 차는 순간 공과 딱 닿는 위치
+            actor.frames = kick_frames
+            actor.frame_index = 0
         return
-    actor.x += scene['speed'] * dt
-    actor.frame_index = int(scene_time / scene['frame_time']) % len(actor.frames)
-    ball_left = sonic_a.x - frame_width(sonic_a) / 2
-    if actor.x + frame_width(actor) / 2 >= ball_left:
+    kick_time += dt
+    actor.frame_index = min(int(kick_time / scene['frame_time']), len(actor.frames) - 1)
+    if not kicked and actor.frame_index >= scene['kick_frame']:
         kicked = True
-        actor.frame_index = scene['kick_frame']
-        actor.x = ball_left - frame_width(actor) / 2     # 겹치지 않고 딱 닿는 위치로
         start_ball_fly()
 
 
 def update_leap(scene, actor, t):
     # 올라가는 동안: 1~6번 프레임, 처음엔 빠르고 끝에서 느려지게 top * (1 - (1-p)^2)
     # 떨어지는 동안: 7~8번 프레임을 0.1초씩 번갈아, 점점 빨라지게 top * (1 - p^2)
-    rise_time, fall_time, top = scene['leap']
+    # 떨어지는 동안 x 는 시작 위치에서 오른쪽으로 dx 만큼 이동 (오른쪽 대각선 아래)
+    rise_time, fall_time, top, dx = scene['leap']
     if t < rise_time:
         p = t / rise_time
         actor.frame_index = min(int(t / scene['frame_time']), 5)
@@ -218,6 +242,7 @@ def update_leap(scene, actor, t):
         p = min((t - rise_time) / fall_time, 1)
         actor.frame_index = 6 + int((t - rise_time) / 0.1) % 2
         actor.height = top * (1 - p ** 2)
+        actor.x = scene['start_x'] + dx * p
 
 
 def update_scene(dt):
@@ -237,6 +262,11 @@ def update_scene(dt):
         setattr(actor, key, lerp(scene['from'][key], scene[key][1], p))
     if 'bounces' in scene:
         actor.height = bounce_height(t, scene['duration'], scene['bounces'])
+    if 'x_path' in scene:
+        points = [scene['start_x']] + scene['x_path']
+        section = scene['duration'] / (len(points) - 1)
+        i = min(int(t / section), len(points) - 2)
+        actor.x = lerp(points[i], points[i + 1], (t - i * section) / section)
     # 장면 끝 순간에도 마지막 프레임을 보여주도록 끝 시각은 아주 조금 앞당겨 계산
     n = int(min(t, scene['duration'] - 1e-6) / scene['frame_time'])
     actor.frame_index = min(n, len(actor.frames) - 1) if scene.get('once') else n % len(actor.frames)
@@ -255,18 +285,25 @@ def start_ball_wait():
 
 
 def start_ball_fly():
-    global ball_state, ball_time, ball_vy
+    # 공이 지나갈 점: 오른쪽 위 모서리(공 그림이 화면 오른쪽·위 끝에 닿는 곳)에서 튕긴 뒤
+    # 반전해서 왼쪽 위 대각선으로, 소닉 B 머리 위 화면 밖까지
+    global ball_state, ball_time, ball_path, ball_from
+    w = sonic_a.frames[0][2] * sonic_a.scale
+    h = sonic_a.frames[0][3] * sonic_a.scale
+    corner = (WIDTH - w / 2, HEIGHT - h - sonic_a.y, 1, FLY_TO_CORNER)
+    above_sonic = (sonic_b.x, HEIGHT - sonic_a.y + 10, -1, FLY_TO_TOP)
     ball_state = 'fly'
     ball_time = 0.0
-    ball_vy = KICK_VY
-    sonic_a.direction = 1       # 오른쪽으로 날아가므로 그림 방향도 오른쪽
+    ball_path = [corner, above_sonic]
+    ball_from = (sonic_a.x, sonic_a.height)
+    sonic_a.direction = 1       # 처음에는 오른쪽으로 날아가므로 그림 방향도 오른쪽
 
 
 def update_ball(dt):
     # 장면과 따로 공을 움직임
     # 기다리는 공은 프레임을 계속 돌리며 WAIT_PERIOD 마다 작게 튕김
-    # 찬 공은 오른쪽 위로 날아가며 중력으로 세로 속도가 줄고, 그림 전체가 화면 밖으로 나가면 사라짐
-    global ball_time, ball_vy, ball_state
+    # 찬 공은 ball_path 의 점을 차례로 직선으로 날아가고, 마지막 점(화면 위 밖)에 닿으면 사라짐
+    global ball_time, ball_state, ball_from
     if ball_state == 'wait':
         ball_time += dt
         sonic_a.frame_index = int(ball_time / BALL_FRAME_TIME) % len(sonic_a.frames)
@@ -274,14 +311,18 @@ def update_ball(dt):
     elif ball_state == 'fly':
         ball_time += dt
         sonic_a.frame_index = int(ball_time / BALL_FRAME_TIME) % len(sonic_a.frames)
-        sonic_a.x += KICK_VX * dt
-        sonic_a.height += ball_vy * dt
-        ball_vy -= GRAVITY * dt
-        left = sonic_a.x - frame_width(sonic_a) / 2
-        bottom = sonic_a.y + sonic_a.height
-        if left > WIDTH or bottom > HEIGHT:
-            ball_state = 'gone'
-            sonic_a.visible = False
+        x, height, direction, duration = ball_path[0]
+        p = min(ball_time / duration, 1)
+        sonic_a.x = lerp(ball_from[0], x, p)
+        sonic_a.height = lerp(ball_from[1], height, p)
+        sonic_a.direction = direction
+        if p >= 1:      # 이 점에 도착: 다음 점으로, 더 없으면 사라짐
+            ball_path.pop(0)
+            ball_from = (x, height)
+            ball_time = 0.0
+            if not ball_path:
+                ball_state = 'gone'
+                sonic_a.visible = False
 
 
 def update(dt):
