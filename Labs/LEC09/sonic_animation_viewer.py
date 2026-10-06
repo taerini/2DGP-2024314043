@@ -11,6 +11,8 @@ CENTER_X = WIDTH // 2      # 화면 가로 중앙
 GROUND_Y = 100             # 캐릭터 발이 닿는 높이
 START_X = 100              # 왼쪽 아래 시작점의 가로 위치
 SCALE = 4                  # 기본 확대 배율 (원본의 4배)
+WAIT_BOUNCE = 16           # 공이 기다리는 동안 튕기는 높이(px)
+WAIT_PERIOD = 0.36         # 기다리는 동안 한 번 튕기는 시간(초)
 
 # 줄별 프레임 (left, bottom, w, h) 목록 - pico2d 처럼 아래쪽 기준 좌표, 위에서부터 1~10번째 줄
 FRAMES = {
@@ -45,6 +47,7 @@ FRAMES = {
 # direction: 1 이면 오른쪽, -1 이면 왼쪽(그림 좌우 반전)
 # once: True 면 프레임을 한 번만 재생 (기본은 장면이 끝날 때까지 반복)
 # bounces: 튕김마다 최고 높이(px) 목록 - 장면 시간을 똑같이 나눠 차례로 튕김
+# ball_wait: True 면 장면이 끝난 뒤 공(소닉 A)이 그 자리에서 작게 튕기며 기다림
 SCENES = [
     {'name': 'idle', 'actor': 'a', 'frames': 'idle', 'frame_time': 0.12, 'duration': 2.64,
      'x': (START_X, START_X), 'direction': 1},
@@ -57,7 +60,7 @@ SCENES = [
     {'name': 'roll', 'actor': 'a', 'frames': 'ball', 'frame_time': 0.06, 'duration': 1.44,
      'x': (None, 1000), 'direction': 1, 'bounces': [120, 120, 120, 120]},
     {'name': 'bounce back', 'actor': 'a', 'frames': 'ball', 'frame_time': 0.06, 'duration': 0.9,
-     'x': (None, 700), 'direction': -1, 'bounces': [100, 60]},
+     'x': (None, 700), 'direction': -1, 'bounces': [100, 60], 'ball_wait': True},
 ]
 
 
@@ -92,6 +95,8 @@ actors = {'a': sonic_a, 'b': sonic_b}
 scene_index = 0             # 지금 재생 중인 장면 번호
 scene_time = 0.0            # 지금 장면이 시작된 뒤 지난 시간
 finished = False            # 마지막 장면까지 끝났으면 True (마지막 화면 유지)
+ball_state = 'scene'        # 공(소닉 A) 상태 - 'scene': 장면이 움직임, 'wait': 제자리에서 작게 튕김
+ball_time = 0.0             # 공이 지금 상태가 된 뒤 지난 시간
 
 
 def handle_events():
@@ -165,15 +170,33 @@ def update_scene(dt):
     n = int(min(t, scene['duration'] - 1e-6) / scene['frame_time'])
     actor.frame_index = min(n, len(actor.frames) - 1) if scene.get('once') else n % len(actor.frames)
     if scene_time >= scene['duration']:
+        if scene.get('ball_wait'):
+            start_ball_wait()
         if scene_index + 1 < len(SCENES):
             start_scene(scene_index + 1)
         else:
             finished = True
 
 
+def start_ball_wait():
+    global ball_state, ball_time
+    ball_state = 'wait'
+    ball_time = 0.0
+
+
+def update_ball(dt):
+    # 장면과 따로 공의 대기 동작을 계산: 공 프레임을 계속 돌리며 WAIT_PERIOD 마다 작게 튕김
+    global ball_time
+    if ball_state == 'wait':
+        ball_time += dt
+        sonic_a.frame_index = int(ball_time / 0.06) % len(sonic_a.frames)
+        sonic_a.height = bounce_height(ball_time % WAIT_PERIOD, WAIT_PERIOD, [WAIT_BOUNCE])
+
+
 def update(dt):
     if not finished:
         update_scene(dt)
+    update_ball(dt)
 
 
 def draw():
