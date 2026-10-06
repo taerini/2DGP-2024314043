@@ -44,6 +44,7 @@ FRAMES = {
 # x, y, scale: (시작값, 끝값) - 장면 동안 경과 시간 비율로 보간, 시작값이 None 이면 앞 장면에서 이어받음
 # direction: 1 이면 오른쪽, -1 이면 왼쪽(그림 좌우 반전)
 # once: True 면 프레임을 한 번만 재생 (기본은 장면이 끝날 때까지 반복)
+# bounces: 튕김마다 최고 높이(px) 목록 - 장면 시간을 똑같이 나눠 차례로 튕김
 SCENES = [
     {'name': 'idle', 'actor': 'a', 'frames': 'idle', 'frame_time': 0.12, 'duration': 2.64,
      'x': (START_X, START_X), 'direction': 1},
@@ -53,6 +54,8 @@ SCENES = [
      'x': (None, 300), 'direction': -1},
     {'name': 'spin', 'actor': 'a', 'frames': 'spin', 'frame_time': 0.06, 'duration': 0.54,
      'x': (None, 460), 'direction': 1, 'once': True},
+    {'name': 'roll', 'actor': 'a', 'frames': 'ball', 'frame_time': 0.06, 'duration': 1.44,
+     'x': (None, 1000), 'direction': 1, 'bounces': [120, 120, 120, 120]},
 ]
 
 
@@ -115,6 +118,15 @@ def lerp(start, end, p):
     return start + (end - start) * p
 
 
+def bounce_height(t, duration, peaks):
+    # 장면 시간 duration 을 튕김 수만큼 나눠, t 가 속한 튕김 안에서의 진행률 q 로 포물선 높이 계산
+    # 4 * peak * q * (1 - q) 는 q = 0, 1 에서 0 (지면), q = 0.5 에서 peak
+    section = duration / len(peaks)
+    i = min(int(t / section), len(peaks) - 1)
+    q = (t - i * section) / section
+    return 4 * peaks[i] * q * (1 - q)
+
+
 def start_scene(index):
     # index 번 장면 시작: 장면에 적힌 시작값으로 소닉을 맞추고, 없는 값은 앞 장면에서 이어받음
     global scene_index, scene_time
@@ -145,6 +157,8 @@ def update_scene(dt):
     p = t / scene['duration']
     for key in scene['from']:
         setattr(actor, key, lerp(scene['from'][key], scene[key][1], p))
+    if 'bounces' in scene:
+        actor.height = bounce_height(t, scene['duration'], scene['bounces'])
     # 장면 끝 순간에도 마지막 프레임을 보여주도록 끝 시각은 아주 조금 앞당겨 계산
     n = int(min(t, scene['duration'] - 1e-6) / scene['frame_time'])
     actor.frame_index = min(n, len(actor.frames) - 1) if scene.get('once') else n % len(actor.frames)
