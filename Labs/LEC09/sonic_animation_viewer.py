@@ -4,6 +4,8 @@ WIDTH, HEIGHT = 1200, 600
 
 open_canvas(WIDTH, HEIGHT)
 
+sprite = load_image('sonic-sprite.png')
+
 running = True
 
 
@@ -19,6 +21,7 @@ def handle_events():
 
 def draw():
     clear_canvas()
+    sprite.draw(WIDTH // 2, HEIGHT // 2)   # 확인용: 시트 전체를 가운데에
     update_canvas()
 
 
