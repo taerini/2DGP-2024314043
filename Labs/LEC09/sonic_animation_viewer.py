@@ -47,6 +47,8 @@ FRAMES = {
 SCENES = [
     {'name': 'idle', 'actor': 'a', 'frames': 'idle', 'frame_time': 0.12, 'duration': 2.64,
      'x': (START_X, START_X), 'direction': 1},
+    {'name': 'walk right', 'actor': 'a', 'frames': 'walk', 'frame_time': 0.08, 'duration': 4.5,
+     'x': (None, 1000), 'direction': 1},
 ]
 
 
