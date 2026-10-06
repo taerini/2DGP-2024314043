@@ -4,6 +4,7 @@ WIDTH, HEIGHT = 1200, 600
 CENTER_X = WIDTH // 2      # 화면 가로 중앙
 GROUND_Y = 100             # 캐릭터 발이 닿는 높이
 SCALE = 4                  # 확대 배율 (원본의 4배)
+REPEAT = 5                 # 동작 하나를 반복 재생하는 횟수
 
 # 동작 목록: 이름, 프레임 (left, bottom, w, h) 목록, 프레임 하나를 보여주는 시간(초)
 # 프레임 좌표는 pico2d 처럼 아래쪽 기준
@@ -21,6 +22,7 @@ sprite = load_image('sonic-sprite.png')
 running = True
 action_index = 0            # 지금 재생 중인 동작 번호
 frame_index = 0
+repeat_count = 0            # 지금 동작을 끝까지 재생한 횟수
 frame_timer = 0.0           # 현재 프레임을 보여준 시간
 
 
@@ -43,12 +45,21 @@ def draw_frame(frame, x, y=GROUND_Y):
 
 def update(dt):
     # 실제 경과 시간 dt 를 쌓아서 frame_time 이 지날 때마다 다음 프레임으로
-    global frame_index, frame_timer
+    # 마지막 프레임을 보여준 뒤에는 1회 재생 완료, REPEAT 회가 끝나면 마지막 프레임에서 멈춤
+    global frame_index, frame_timer, repeat_count
     action = ACTIONS[action_index]
+    if repeat_count >= REPEAT:
+        return
     frame_timer += dt
     while frame_timer >= action['frame_time']:
         frame_timer -= action['frame_time']
-        frame_index = (frame_index + 1) % len(action['frames'])
+        if frame_index == len(action['frames']) - 1:
+            repeat_count += 1
+            if repeat_count >= REPEAT:
+                return
+            frame_index = 0
+        else:
+            frame_index += 1
 
 
 def draw():
