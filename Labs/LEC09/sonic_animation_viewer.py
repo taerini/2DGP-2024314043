@@ -51,6 +51,7 @@ FRAMES = {
 # bounces: 튕김마다 최고 높이(px) 목록 - 장면 시간을 똑같이 나눠 차례로 튕김
 # ball_wait: True 면 장면이 끝난 뒤 공(소닉 A)이 그 자리에서 작게 튕기며 기다림
 # kick: True 면 정해진 시간 대신 speed(px/s) 로 달려가 공에 닿으면 kick_frame 그림으로 멈추고 공을 참
+# leap: (올라가는 시간, 떨어지는 시간, 최고 높이) - 앞 6프레임으로 뛰어오르고 뒤 2프레임으로 추락
 SCENES = [
     {'name': 'idle', 'actor': 'a', 'frames': 'idle', 'frame_time': 0.12, 'duration': 2.64,
      'x': (START_X, START_X), 'direction': 1},
@@ -70,6 +71,8 @@ SCENES = [
      'x': (None, START_X), 'y': (None, GROUND_Y), 'scale': (None, SCALE), 'direction': -1},
     {'name': 'run kick', 'actor': 'b', 'frames': 'run', 'frame_time': 0.06, 'direction': 1,
      'kick': True, 'speed': 450, 'kick_frame': 4},
+    {'name': 'leap', 'actor': 'b', 'frames': 'leap', 'frame_time': 0.12, 'duration': 1.22,
+     'leap': (0.72, 0.5, 200)},
 ]
 
 
@@ -196,6 +199,20 @@ def update_kick(scene, actor, dt):
         start_ball_fly()
 
 
+def update_leap(scene, actor, t):
+    # 올라가는 동안: 1~6번 프레임, 처음엔 빠르고 끝에서 느려지게 200 * (1 - (1-p)^2)
+    # 떨어지는 동안: 7~8번 프레임을 번갈아, 점점 빨라지게 200 * (1 - p^2)
+    rise_time, fall_time, top = scene['leap']
+    if t < rise_time:
+        p = t / rise_time
+        actor.frame_index = min(int(t / scene['frame_time']), 5)
+        actor.height = top * (1 - (1 - p) ** 2)
+    else:
+        p = min((t - rise_time) / fall_time, 1)
+        actor.frame_index = 6 + int((t - rise_time) / 0.1) % 2
+        actor.height = top * (1 - p ** 2)
+
+
 def update_scene(dt):
     # 장면 경과 시간으로 프레임 번호와 위치, 크기를 계산
     global scene_time
@@ -216,6 +233,8 @@ def update_scene(dt):
     # 장면 끝 순간에도 마지막 프레임을 보여주도록 끝 시각은 아주 조금 앞당겨 계산
     n = int(min(t, scene['duration'] - 1e-6) / scene['frame_time'])
     actor.frame_index = min(n, len(actor.frames) - 1) if scene.get('once') else n % len(actor.frames)
+    if 'leap' in scene:
+        update_leap(scene, actor, t)
     if scene_time >= scene['duration']:
         if scene.get('ball_wait'):
             start_ball_wait()
