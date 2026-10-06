@@ -49,6 +49,8 @@ SCENES = [
      'x': (START_X, START_X), 'direction': 1},
     {'name': 'walk right', 'actor': 'a', 'frames': 'walk', 'frame_time': 0.08, 'duration': 4.5,
      'x': (None, 1000), 'direction': 1},
+    {'name': 'walk left', 'actor': 'a', 'frames': 'walk', 'frame_time': 0.08, 'duration': 3.5,
+     'x': (None, 300), 'direction': -1},
 ]
 
 
