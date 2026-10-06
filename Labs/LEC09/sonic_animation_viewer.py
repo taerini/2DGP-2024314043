@@ -70,11 +70,15 @@ def handle_events():
             running = False
 
 
-def draw_frame(frame, x, y=GROUND_Y):
+def draw_frame(frame, x, y=GROUND_Y, direction=1):
     # frame = (left, bottom, w, h) 영역을 SCALE 배로 확대해 그림
     # 프레임마다 크기가 달라도 아래 변 중앙이 (x, y)에 오도록 중심 위치를 계산
+    # 시트의 소닉은 오른쪽을 보므로 왼쪽(direction == -1)으로 갈 때는 좌우 반전
     left, bottom, w, h = frame
-    sprite.clip_draw(left, bottom, w, h, x, y + h * SCALE / 2, w * SCALE, h * SCALE)
+    if direction == 1:
+        sprite.clip_draw(left, bottom, w, h, x, y + h * SCALE / 2, w * SCALE, h * SCALE)
+    else:
+        sprite.clip_composite_draw(left, bottom, w, h, 0, 'h', x, y + h * SCALE / 2, w * SCALE, h * SCALE)
 
 
 def start_action(index):
@@ -127,7 +131,7 @@ def update(dt):
 
 def draw():
     clear_canvas()
-    draw_frame(ACTIONS[action_index]['frames'][frame_index], x)
+    draw_frame(ACTIONS[action_index]['frames'][frame_index], x, direction=direction)
     update_canvas()
 
 
