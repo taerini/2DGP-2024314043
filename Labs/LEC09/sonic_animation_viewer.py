@@ -56,6 +56,8 @@ SCENES = [
      'x': (None, 460), 'direction': 1, 'once': True},
     {'name': 'roll', 'actor': 'a', 'frames': 'ball', 'frame_time': 0.06, 'duration': 1.44,
      'x': (None, 1000), 'direction': 1, 'bounces': [120, 120, 120, 120]},
+    {'name': 'bounce back', 'actor': 'a', 'frames': 'ball', 'frame_time': 0.06, 'duration': 0.9,
+     'x': (None, 700), 'direction': -1, 'bounces': [100, 60]},
 ]
 
 
