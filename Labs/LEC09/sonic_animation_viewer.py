@@ -52,7 +52,7 @@ FRAMES = {
 # bounces: 튕김마다 최고 높이(px) 목록 - 장면 시간을 똑같이 나눠 차례로 튕김
 # ball_wait: True 면 장면이 끝난 뒤 공(소닉 A)이 그 자리에서 작게 튕기며 기다림
 # frame_order: 줄의 프레임 중 쓸 번호 목록 (없으면 줄 전체를 순서대로)
-# x_path: x 가 차례로 지나갈 값 목록 - 장면 시간을 똑같이 나눠 구간마다 직선 이동 (시작은 앞 장면에서 이어받음)
+# x_path: [(x, 프레임 수), ...] - 시작 위치(앞 장면에서 이어받음)에서 x 까지 그 프레임 수만큼의 시간 동안 직선 이동
 # kick: (달려가는 줄, 달리는 프레임 시간) - 정해진 시간 대신 speed(px/s) 로 달려가 공 앞에 멈춘 뒤
 #       frames 줄을 한 번 재생하며 kick_frame 번째 그림에서 공을 참, 공이 사라지면 장면 끝
 # leap: (올라가는 시간, 떨어지는 시간, 최고 높이, 떨어지며 오른쪽으로 가는 거리)
@@ -78,12 +78,12 @@ SCENES = [
      'kick': ('dash', 0.05), 'speed': 450, 'kick_frame': 4},
     {'name': 'leap', 'actor': 'b', 'frames': 'leap', 'frame_time': 0.12, 'duration': 1.72,
      'leap': (0.72, 1.0, 300, 150)},
-    {'name': 'skid', 'actor': 'b', 'frames': 'skid', 'frame_time': 0.12, 'duration': 0.96,
-     'x_path': [922, 200], 'direction': 1, 'once': True},
-    {'name': 'hop', 'actor': 'b', 'frames': 'pose', 'frame_order': [0, 1], 'frame_time': 0.15,
-     'duration': 0.3, 'direction': 1, 'once': True, 'bounces': [30]},
-    {'name': 'pose', 'actor': 'b', 'frames': 'pose', 'frame_order': [2, 3, 2, 3], 'frame_time': 0.15,
-     'duration': 0.6, 'direction': 1, 'once': True},
+    {'name': 'skid', 'actor': 'b', 'frames': 'skid', 'frame_time': 0.2, 'duration': 1.6,
+     'x_path': [(800, 2), (450, 6)], 'direction': 1, 'once': True},
+    {'name': 'hop', 'actor': 'b', 'frames': 'pose', 'frame_order': [0, 1], 'frame_time': 0.25,
+     'duration': 0.5, 'direction': 1, 'once': True, 'bounces': [20]},
+    {'name': 'pose', 'actor': 'b', 'frames': 'pose', 'frame_order': [2, 3, 2, 3], 'frame_time': 0.25,
+     'duration': 1.0, 'direction': 1, 'once': True},
 ]
 
 
@@ -263,10 +263,14 @@ def update_scene(dt):
     if 'bounces' in scene:
         actor.height = bounce_height(t, scene['duration'], scene['bounces'])
     if 'x_path' in scene:
-        points = [scene['start_x']] + scene['x_path']
-        section = scene['duration'] / (len(points) - 1)
-        i = min(int(t / section), len(points) - 2)
-        actor.x = lerp(points[i], points[i + 1], (t - i * section) / section)
+        # 지금 시각 t 가 속한 구간을 찾아 그 구간 안에서 직선 이동
+        x0, start = scene['start_x'], 0.0
+        for x1, count in scene['x_path']:
+            section = count * scene['frame_time']
+            if t <= start + section:
+                actor.x = lerp(x0, x1, (t - start) / section)
+                break
+            x0, start = x1, start + section
     # 장면 끝 순간에도 마지막 프레임을 보여주도록 끝 시각은 아주 조금 앞당겨 계산
     n = int(min(t, scene['duration'] - 1e-6) / scene['frame_time'])
     actor.frame_index = min(n, len(actor.frames) - 1) if scene.get('once') else n % len(actor.frames)
