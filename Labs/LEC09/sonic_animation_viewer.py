@@ -11,6 +11,7 @@ CENTER_X = WIDTH // 2      # 화면 가로 중앙
 GROUND_Y = 100             # 캐릭터 발이 닿는 높이
 START_X = 100              # 왼쪽 아래 시작점의 가로 위치
 SCALE = 4                  # 기본 확대 배율 (원본의 4배)
+BALL_FRAME_TIME = 0.06     # 장면 밖에서 공(기다림, 날아감) 프레임 하나를 보여주는 시간(초)
 WAIT_BOUNCE = 16           # 공이 기다리는 동안 튕기는 높이(px)
 WAIT_PERIOD = 0.36         # 기다리는 동안 한 번 튕기는 시간(초)
 KICK_VX, KICK_VY = 700, 650   # 찬 공의 처음 속도(px/s): 오른쪽, 위쪽
@@ -206,8 +207,8 @@ def update_kick(scene, actor, dt):
 
 
 def update_leap(scene, actor, t):
-    # 올라가는 동안: 1~6번 프레임, 처음엔 빠르고 끝에서 느려지게 200 * (1 - (1-p)^2)
-    # 떨어지는 동안: 7~8번 프레임을 번갈아, 점점 빨라지게 200 * (1 - p^2)
+    # 올라가는 동안: 1~6번 프레임, 처음엔 빠르고 끝에서 느려지게 top * (1 - (1-p)^2)
+    # 떨어지는 동안: 7~8번 프레임을 0.1초씩 번갈아, 점점 빨라지게 top * (1 - p^2)
     rise_time, fall_time, top = scene['leap']
     if t < rise_time:
         p = t / rise_time
@@ -262,16 +263,17 @@ def start_ball_fly():
 
 
 def update_ball(dt):
-    # 장면과 따로 공의 대기 동작을 계산: 공 프레임을 계속 돌리며 WAIT_PERIOD 마다 작게 튕김
+    # 장면과 따로 공을 움직임
+    # 기다리는 공은 프레임을 계속 돌리며 WAIT_PERIOD 마다 작게 튕김
     # 찬 공은 오른쪽 위로 날아가며 중력으로 세로 속도가 줄고, 그림 전체가 화면 밖으로 나가면 사라짐
     global ball_time, ball_vy, ball_state
     if ball_state == 'wait':
         ball_time += dt
-        sonic_a.frame_index = int(ball_time / 0.06) % len(sonic_a.frames)
+        sonic_a.frame_index = int(ball_time / BALL_FRAME_TIME) % len(sonic_a.frames)
         sonic_a.height = bounce_height(ball_time % WAIT_PERIOD, WAIT_PERIOD, [WAIT_BOUNCE])
     elif ball_state == 'fly':
         ball_time += dt
-        sonic_a.frame_index = int(ball_time / 0.06) % len(sonic_a.frames)
+        sonic_a.frame_index = int(ball_time / BALL_FRAME_TIME) % len(sonic_a.frames)
         sonic_a.x += KICK_VX * dt
         sonic_a.height += ball_vy * dt
         ball_vy -= GRAVITY * dt
