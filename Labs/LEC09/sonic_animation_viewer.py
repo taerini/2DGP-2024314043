@@ -48,6 +48,7 @@ FRAMES = {
 # once: True 면 프레임을 한 번만 재생 (기본은 장면이 끝날 때까지 반복)
 # bounces: 튕김마다 최고 높이(px) 목록 - 장면 시간을 똑같이 나눠 차례로 튕김
 # ball_wait: True 면 장면이 끝난 뒤 공(소닉 A)이 그 자리에서 작게 튕기며 기다림
+# kick: True 면 정해진 시간 대신 speed(px/s) 로 달려가 공에 닿으면 kick_frame 그림으로 멈추고 공을 참
 SCENES = [
     {'name': 'idle', 'actor': 'a', 'frames': 'idle', 'frame_time': 0.12, 'duration': 2.64,
      'x': (START_X, START_X), 'direction': 1},
@@ -65,6 +66,8 @@ SCENES = [
      'x': (START_X, 550), 'y': (380, 260), 'scale': (1.5, 2.5), 'direction': 1},
     {'name': 'come near', 'actor': 'b', 'frames': 'peel_out', 'frame_time': 0.05, 'duration': 2.0,
      'x': (None, START_X), 'y': (None, GROUND_Y), 'scale': (None, SCALE), 'direction': -1},
+    {'name': 'run kick', 'actor': 'b', 'frames': 'run', 'frame_time': 0.06, 'direction': 1,
+     'kick': True, 'speed': 450, 'kick_frame': 4},
 ]
 
 
@@ -101,6 +104,7 @@ scene_time = 0.0            # 지금 장면이 시작된 뒤 지난 시간
 finished = False            # 마지막 장면까지 끝났으면 True (마지막 화면 유지)
 ball_state = 'scene'        # 공(소닉 A) 상태 - 'scene': 장면이 움직임, 'wait': 제자리에서 작게 튕김
 ball_time = 0.0             # 공이 지금 상태가 된 뒤 지난 시간
+kicked = False              # 장면 9 에서 공을 찼으면 True
 
 
 def handle_events():
@@ -159,12 +163,43 @@ def start_scene(index):
             setattr(actor, key, scene['from'][key])   # 시작 화면부터 시작값으로 그려지도록
 
 
+def next_scene():
+    # 다음 장면으로, 마지막 장면이었으면 끝 (마지막 화면 유지)
+    global finished
+    if scene_index + 1 < len(SCENES):
+        start_scene(scene_index + 1)
+    else:
+        finished = True
+
+
+def frame_width(actor):
+    # 지금 프레임을 확대해 그렸을 때의 가로 폭
+    return actor.frames[actor.frame_index][2] * actor.scale
+
+
+def update_kick(scene, actor, dt):
+    # 공을 향해 달리다가 소닉 그림 오른쪽 끝이 공 그림 왼쪽 끝에 닿으면 차는 그림으로 멈춤
+    global kicked
+    if kicked:
+        return
+    actor.x += scene['speed'] * dt
+    actor.frame_index = int(scene_time / scene['frame_time']) % len(actor.frames)
+    ball_left = sonic_a.x - frame_width(sonic_a) / 2
+    if actor.x + frame_width(actor) / 2 >= ball_left:
+        kicked = True
+        actor.frame_index = scene['kick_frame']
+        actor.x = ball_left - frame_width(actor) / 2     # 겹치지 않고 딱 닿는 위치로
+
+
 def update_scene(dt):
     # 장면 경과 시간으로 프레임 번호와 위치, 크기를 계산
-    global scene_time, finished
+    global scene_time
     scene = SCENES[scene_index]
     actor = actors[scene['actor']]
     scene_time += dt
+    if scene.get('kick'):
+        update_kick(scene, actor, dt)
+        return
     t = min(scene_time, scene['duration'])
     p = t / scene['duration']
     for key in scene['from']:
@@ -177,10 +212,7 @@ def update_scene(dt):
     if scene_time >= scene['duration']:
         if scene.get('ball_wait'):
             start_ball_wait()
-        if scene_index + 1 < len(SCENES):
-            start_scene(scene_index + 1)
-        else:
-            finished = True
+        next_scene()
 
 
 def start_ball_wait():
