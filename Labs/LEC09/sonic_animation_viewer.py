@@ -66,7 +66,8 @@ def update(dt):
     if pausing:
         pause_timer += dt
         if pause_timer >= PAUSE_TIME:
-            start_action(action_index)   # 아직 동작이 하나뿐이라 같은 동작을 다시 재생
+            # 다음 동작으로, 마지막 동작 다음에는 첫 동작부터 다시
+            start_action((action_index + 1) % len(ACTIONS))
         return
     frame_timer += dt
     while frame_timer >= action['frame_time']:
