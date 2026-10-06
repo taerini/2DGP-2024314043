@@ -1,6 +1,5 @@
-# 소닉 애니메이션 뷰어
-# sonic-sprite.png 의 10가지 동작을 차례로 5회씩 재생하고 1초 정지한 뒤 다음 동작으로, 끝나면 처음부터 반복
-# 이동 동작은 재생과 동시에 화면을 가로질러 움직이고, 중앙 고정 동작은 화면 가운데에서 재생
+# 소닉 애니메이션 뷰어 (장면 시나리오)
+# sonic-sprite.png 의 줄별 동작으로 정해진 장면을 차례로 한 번 재생하고 마지막 포즈에서 멈춤
 # 종료: 창 닫기 버튼 또는 ESC
 
 from pico2d import *
@@ -10,10 +9,8 @@ import pico2d
 WIDTH, HEIGHT = 1200, 600
 CENTER_X = WIDTH // 2      # 화면 가로 중앙
 GROUND_Y = 100             # 캐릭터 발이 닿는 높이
-SCALE = 4                  # 확대 배율 (원본의 4배)
-REPEAT = 5                 # 동작 하나를 반복 재생하는 횟수
-PAUSE_TIME = 1.0           # 반복이 끝난 뒤 정지하는 시간(초)
-JUMP_HEIGHT = 160          # 점프 최고 높이(px)
+START_X = 100              # 왼쪽 아래 시작점의 가로 위치
+SCALE = 4                  # 기본 확대 배율 (원본의 4배)
 
 # 줄별 프레임 (left, bottom, w, h) 목록 - pico2d 처럼 아래쪽 기준 좌표, 위에서부터 1~10번째 줄
 FRAMES = {
@@ -41,37 +38,49 @@ FRAMES = {
     'pose': [(6, 56, 34, 40), (49, 56, 34, 43), (96, 59, 23, 39), (125, 59, 23, 39)],
 }
 
-# 동작 목록: 이름, 프레임 하나를 보여주는 시간(초), 이동 속도(px/s, 0 이면 제자리),
-#            jump 가 True 면 1회 재생마다 포물선 점프
-ACTIONS = [
-    {'name': 'idle', 'frame_time': 0.12, 'speed': 0, 'frames': FRAMES['idle']},
-    {'name': 'walk', 'frame_time': 0.08, 'speed': 200, 'frames': FRAMES['walk']},
-    {'name': 'run', 'frame_time': 0.06, 'speed': 450, 'frames': FRAMES['run']},
-    {'name': 'spin', 'frame_time': 0.06, 'speed': 0, 'frames': FRAMES['spin']},
-    {'name': 'ball', 'frame_time': 0.06, 'speed': 300, 'jump': True, 'frames': FRAMES['ball']},
-    {'name': 'dash', 'frame_time': 0.05, 'speed': 550, 'frames': FRAMES['dash']},
-    {'name': 'peel_out', 'frame_time': 0.05, 'speed': 650, 'frames': FRAMES['peel_out']},
-    {'name': 'leap', 'frame_time': 0.12, 'speed': 0, 'frames': FRAMES['leap']},
-    {'name': 'skid', 'frame_time': 0.08, 'speed': 250, 'frames': FRAMES['skid']},
-    {'name': 'pose', 'frame_time': 0.15, 'speed': 0, 'frames': FRAMES['pose']},
+# 장면 목록 (차례로 한 번씩 재생)
+# actor: 'a' 는 처음 소닉(나중에 공), 'b' 는 나중에 등장하는 소닉
+# frames: FRAMES 의 줄 이름, frame_time: 프레임 하나를 보여주는 시간(초), duration: 장면 시간(초)
+# x, y, scale: (시작값, 끝값) - 장면 동안 경과 시간 비율로 보간, 시작값이 None 이면 앞 장면에서 이어받음
+# direction: 1 이면 오른쪽, -1 이면 왼쪽(그림 좌우 반전)
+# once: True 면 프레임을 한 번만 재생 (기본은 장면이 끝날 때까지 반복)
+SCENES = [
+    {'name': 'idle', 'actor': 'a', 'frames': 'idle', 'frame_time': 0.12, 'duration': 2.64,
+     'x': (START_X, START_X), 'direction': 1},
 ]
+
+
+class Actor:
+    # 화면에 그려지는 소닉 하나: 위치는 발(프레임 아래 변 중앙) 기준
+    def __init__(self, x, y=GROUND_Y, scale=SCALE):
+        self.frames = FRAMES['idle']
+        self.frame_index = 0
+        self.x, self.y = x, y
+        self.height = 0             # 발 위치보다 위로 뜬 높이 (튕김, 점프)
+        self.scale = scale
+        self.direction = 1
+        self.visible = False
+
+    def draw(self):
+        if self.visible:
+            draw_frame(self.frames[self.frame_index], self.x, self.y + self.height,
+                       self.direction, self.scale)
+
 
 open_canvas(WIDTH, HEIGHT)
 
 # 어느 폴더에서 실행해도 이 파일 옆의 이미지를 읽도록 경로를 만듦
 sprite = load_image(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sonic-sprite.png'))
-# 동작 이름 표시용 글꼴: pico2d 패키지에 들어 있는 글꼴 사용
+# 장면 이름 표시용 글꼴: pico2d 패키지에 들어 있는 글꼴 사용
 font = load_font(os.path.join(os.path.dirname(pico2d.__file__), 'data', 'ConsolaMalgun.ttf'), 24)
 
 running = True
-action_index = 0            # 지금 재생 중인 동작 번호
-frame_index = 0             # 지금 보여주는 프레임 번호
-repeat_count = 0            # 지금 동작을 끝까지 재생한 횟수
-frame_timer = 0.0           # 현재 프레임을 보여준 시간
-pausing = False             # True 면 정지 구간 (마지막 프레임 유지)
-pause_timer = 0.0           # 정지한 시간
-x = CENTER_X                # 캐릭터 발 위치(가로)
-direction = 1               # 1 이면 오른쪽, -1 이면 왼쪽으로 이동
+sonic_a = Actor(START_X)
+sonic_b = Actor(START_X)
+actors = {'a': sonic_a, 'b': sonic_b}
+scene_index = 0             # 지금 재생 중인 장면 번호
+scene_time = 0.0            # 지금 장면이 시작된 뒤 지난 시간
+finished = False            # 마지막 장면까지 끝났으면 True (마지막 화면 유지)
 
 
 def handle_events():
@@ -95,78 +104,66 @@ def draw_frame(frame, x, y=GROUND_Y, direction=1, scale=SCALE):
         sprite.clip_composite_draw(left, bottom, w, h, 0, 'h', x, y + h * scale / 2, w * scale, h * scale)
 
 
-def start_action(index):
-    # index 번 동작을 처음부터 재생하도록 상태를 초기화
-    # 이동 동작도 중앙 고정 동작(speed 0)도 화면 가운데에서 오른쪽을 보고 시작
-    global action_index, frame_index, repeat_count, frame_timer, pausing, pause_timer, x, direction
-    action_index = index
-    x = CENTER_X
-    direction = 1
-    frame_index = 0
-    repeat_count = 0
-    frame_timer = 0.0
-    pausing = False
-    pause_timer = 0.0
+def lerp(start, end, p):
+    # start 에서 end 까지 p (0~1) 비율만큼 간 값
+    return start + (end - start) * p
+
+
+def start_scene(index):
+    # index 번 장면 시작: 장면에 적힌 시작값으로 소닉을 맞추고, 없는 값은 앞 장면에서 이어받음
+    global scene_index, scene_time
+    scene_index = index
+    scene_time = 0.0
+    scene = SCENES[index]
+    actor = actors[scene['actor']]
+    actor.visible = True
+    actor.frames = FRAMES[scene['frames']]
+    actor.frame_index = 0
+    actor.height = 0
+    actor.direction = scene.get('direction', actor.direction)
+    # 보간할 값의 시작값이 None 이면 지금 값에서 시작
+    scene['from'] = {}
+    for key in ('x', 'y', 'scale'):
+        if key in scene:
+            start, end = scene[key]
+            scene['from'][key] = getattr(actor, key) if start is None else start
+
+
+def update_scene(dt):
+    # 장면 경과 시간으로 프레임 번호와 위치, 크기를 계산
+    global scene_time, finished
+    scene = SCENES[scene_index]
+    actor = actors[scene['actor']]
+    scene_time += dt
+    t = min(scene_time, scene['duration'])
+    p = t / scene['duration']
+    for key in scene['from']:
+        setattr(actor, key, lerp(scene['from'][key], scene[key][1], p))
+    # 장면 끝 순간에도 마지막 프레임을 보여주도록 끝 시각은 아주 조금 앞당겨 계산
+    n = int(min(t, scene['duration'] - 1e-6) / scene['frame_time'])
+    actor.frame_index = min(n, len(actor.frames) - 1) if scene.get('once') else n % len(actor.frames)
+    if scene_time >= scene['duration']:
+        if scene_index + 1 < len(SCENES):
+            start_scene(scene_index + 1)
+        else:
+            finished = True
 
 
 def update(dt):
-    # 실제 경과 시간 dt 를 쌓아서 frame_time 이 지날 때마다 다음 프레임으로
-    # 마지막 프레임을 보여준 뒤에는 1회 재생 완료, REPEAT 회가 끝나면 PAUSE_TIME 동안 정지
-    # 정지 중에도 이 함수는 매 화면 불리므로 이벤트 처리와 화면 갱신은 계속됨
-    global frame_index, frame_timer, repeat_count, pausing, pause_timer, x, direction
-    action = ACTIONS[action_index]
-    if pausing:
-        pause_timer += dt
-        if pause_timer >= PAUSE_TIME:
-            # 다음 동작으로, 마지막 동작 다음에는 첫 동작부터 다시
-            start_action((action_index + 1) % len(ACTIONS))
-        return
-    # 프레임 전환과 별개로 매 화면 경과 시간만큼 이동해서 움직임이 끊기지 않게 함
-    x += direction * action['speed'] * dt
-    frame_timer += dt
-    while frame_timer >= action['frame_time']:
-        frame_timer -= action['frame_time']
-        if frame_index == len(action['frames']) - 1:
-            repeat_count += 1
-            if repeat_count >= REPEAT:
-                pausing = True
-                break
-            frame_index = 0
-        else:
-            frame_index += 1
-    # 확대된 프레임 가장자리가 화면 끝에 닿으면 안쪽으로 되돌리고 방향을 반대로
-    # 프레임마다 폭이 다르므로 이번 화면에 그릴 프레임으로 검사
-    half = action['frames'][frame_index][2] * SCALE / 2
-    if x + half > WIDTH:
-        x = WIDTH - half
-        direction = -1
-    elif x - half < 0:
-        x = half
-        direction = 1
-
-
-def jump_height():
-    # 1회 재생 안에서의 진행률 p (0~1) 로 포물선 높이 4 * H * p * (1 - p) 계산
-    # 정지 중에는 5회째 착지한 상태로 지면에 둠
-    action = ACTIONS[action_index]
-    if not action.get('jump') or pausing:
-        return 0
-    p = (frame_index + frame_timer / action['frame_time']) / len(action['frames'])
-    return 4 * JUMP_HEIGHT * p * (1 - p)
+    if not finished:
+        update_scene(dt)
 
 
 def draw():
     clear_canvas()
-    draw_frame(ACTIONS[action_index]['frames'][frame_index], x, GROUND_Y + jump_height(), direction)
-    # 왼쪽 위에 현재 동작 이름과 몇 번째 재생인지 표시 (예: walk 3/5)
-    if pausing:
-        info = '%s %d/%d (정지)' % (ACTIONS[action_index]['name'], REPEAT, REPEAT)
-    else:
-        info = '%s %d/%d' % (ACTIONS[action_index]['name'], repeat_count + 1, REPEAT)
-    font.draw(20, HEIGHT - 30, info, (0, 0, 0))
+    sonic_b.draw()
+    sonic_a.draw()
+    # 왼쪽 위에 지금 장면 번호와 이름 표시
+    font.draw(20, HEIGHT - 30, '%d. %s' % (scene_index + 1, SCENES[scene_index]['name']), (0, 0, 0))
     update_canvas()
 
 
+start_scene(0)
 last_time = get_time()
 while running:
     handle_events()
