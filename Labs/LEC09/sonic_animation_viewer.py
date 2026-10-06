@@ -63,6 +63,8 @@ SCENES = [
      'x': (None, 700), 'direction': -1, 'bounces': [100, 60], 'ball_wait': True},
     {'name': 'far enter', 'actor': 'b', 'frames': 'dash', 'frame_time': 0.05, 'duration': 2.0,
      'x': (START_X, 550), 'y': (380, 260), 'scale': (1.5, 2.5), 'direction': 1},
+    {'name': 'come near', 'actor': 'b', 'frames': 'peel_out', 'frame_time': 0.05, 'duration': 2.0,
+     'x': (None, START_X), 'y': (None, GROUND_Y), 'scale': (None, SCALE), 'direction': -1},
 ]
 
 
