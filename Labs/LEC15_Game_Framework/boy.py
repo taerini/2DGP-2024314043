@@ -48,6 +48,8 @@ class Boy:
         self.frame = 0
 
     def fire_ball(self):
+        if self.item is None:
+            return  # 공 없음을 선택했으면 발사하지 않음
         ball = Ball(self.x, self.y, self.face_dir * 10)
         game_world.add_oject(ball)
 
