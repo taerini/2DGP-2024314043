@@ -57,6 +57,11 @@ def pause():
 def resume():
     # 정지했던 시간만큼 미뤄서, 다시 시작하자마자 소년이 잠들지 않게 함
     boy.idle_started_at += get_time() - paused_at
+    # 다른 모드에 있는 동안 뗀 방향키는 전달되지 않으므로 키 상태를 초기화
+    boy.pressed_keys.clear()
+    if boy.state == 'RUN':
+        boy.dir = 0
+        boy.stop_run()
 
 
 running = True
