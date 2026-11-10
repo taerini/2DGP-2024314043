@@ -37,6 +37,8 @@ def handle_events():
         elif event.type == SDL_KEYDOWN and event.key in ITEM_KEYS:
             play_mode.boy.item = ITEM_KEYS[event.key]
             game_framework.pop_mode()
+            return  # 창이 닫혔으므로 남은 이벤트는 처리하지 않음
         elif event.type == SDL_KEYDOWN and event.key in (SDLK_i, SDLK_ESCAPE):
             game_framework.pop_mode()  # 선택하지 않고 닫기
+            return
 
