@@ -5,6 +5,13 @@ import play_mode
 
 image = None
 
+# 누른 숫자 키 -> 소년이 갖게 될 아이템
+ITEM_KEYS = {
+    SDLK_0: None,       # 공 없음
+    SDLK_1: 'Ball',     # 작은 공
+    SDLK_2: 'BigBall',  # 큰 공
+}
+
 def init():
     global image
     image = load_image('item_select.png')
@@ -27,14 +34,8 @@ def handle_events():
     for event in event_list:
         if event.type == SDL_QUIT:
             game_framework.quit()
-        elif event.type == SDL_KEYDOWN and event.key == SDLK_0:
-            play_mode.boy.item = None
-            game_framework.pop_mode()
-        elif event.type == SDL_KEYDOWN and event.key == SDLK_1:
-            play_mode.boy.item = 'Ball'
-            game_framework.pop_mode()
-        elif event.type == SDL_KEYDOWN and event.key == SDLK_2:
-            play_mode.boy.item = 'BigBall'
+        elif event.type == SDL_KEYDOWN and event.key in ITEM_KEYS:
+            play_mode.boy.item = ITEM_KEYS[event.key]
             game_framework.pop_mode()
         elif event.type == SDL_KEYDOWN and event.key in (SDLK_i, SDLK_ESCAPE):
             game_framework.pop_mode()  # 선택하지 않고 닫기
