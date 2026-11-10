@@ -13,7 +13,7 @@ def finish():
     del image
 
 def update():
-    pass
+    pass  # 아이템 선택 중에는 게임 월드를 업데이트하지 않음
 
 def render():
     clear_canvas()
