@@ -26,4 +26,6 @@ def handle_events():
     for event in event_list:
         if event.type == SDL_QUIT:
             game_framework.quit()
+        elif event.type == SDL_KEYDOWN and event.key in (SDLK_i, SDLK_ESCAPE):
+            game_framework.pop_mode()  # 선택하지 않고 닫기
 
