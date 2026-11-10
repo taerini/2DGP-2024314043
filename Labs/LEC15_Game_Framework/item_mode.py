@@ -18,6 +18,7 @@ def update():
 def render():
     clear_canvas()
     game_world.render()  # 멈춘 게임 화면을 배경으로 그대로 보여줌
+    image.draw(400, 300)  # 화면 가운데에 아이템 선택창
     update_canvas()
 
 def handle_events():
