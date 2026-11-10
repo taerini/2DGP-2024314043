@@ -22,4 +22,8 @@ def render():
     update_canvas()
 
 def handle_events():
-    pass
+    event_list = get_events()
+    for event in event_list:
+        if event.type == SDL_QUIT:
+            game_framework.quit()
+
