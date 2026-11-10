@@ -3,6 +3,7 @@ import game_world
 import game_framework
 import title_mode
 import pause_mode
+import item_mode
 from boy import Boy
 from grass import Grass
 
