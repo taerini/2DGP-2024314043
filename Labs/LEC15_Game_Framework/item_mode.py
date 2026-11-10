@@ -33,6 +33,9 @@ def handle_events():
         elif event.type == SDL_KEYDOWN and event.key == SDLK_1:
             play_mode.boy.item = 'Ball'
             game_framework.pop_mode()
+        elif event.type == SDL_KEYDOWN and event.key == SDLK_2:
+            play_mode.boy.item = 'BigBall'
+            game_framework.pop_mode()
         elif event.type == SDL_KEYDOWN and event.key in (SDLK_i, SDLK_ESCAPE):
             game_framework.pop_mode()  # 선택하지 않고 닫기
 
